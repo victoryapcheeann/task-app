@@ -14,39 +14,42 @@ import SubTaskForm from './NewSubTaskForm';
 const SubTask = () => {
   const { currentTask, subtasks, setSubtasks } = useAppContext();
   const [openSubtaskForm, setOpenSubtaskForm] = useState(false); // State to control the dialog visibility
+  const [currentSubTask, setCurrentSubTask] = useState(null); // State to hold the subtask being edited
+  const [editSubtask, setEditSubtask] = useState(null); // State to hold the subtask being edited
+  const [editMode, setEditMode] = useState(false);
+
+  const fetchSubtasks = async () => {
+    const { data, error } = await supabase
+      .rpc('get_all_subtasks_for_task', { main_task_id: currentTask.task_id });
+
+    if (error) {
+      console.error('Error fetching subtasks:', error.message);
+    } else {
+      setSubtasks(data);
+    }
+  };
 
   useEffect(() => {
     if (!currentTask) return;
 
-    const fetchSubtasks = async () => {
-      const { data, error } = await supabase
-        .rpc('get_all_subtasks_for_task', { main_task_id: currentTask.task_id });
-
-      if (error) {
-        console.error('Error fetching subtasks:', error.message);
-      } else {
-        console.log('subtask', data)
-        setSubtasks(data);
-      }
-    };
-
     fetchSubtasks();
   }, [currentTask, setSubtasks]);
-
-  useEffect(() => {
-    console.log('subtasks', subtasks)
-  }, [subtasks])
 
   const getBorderColor = (status) => {
     return status === 'Completed' ? 'green' : 'grey ';
   };
+
+    // This function is called when the Edit button is clicked
+    const handleEditClick = () => {
+        setOpenSubtaskForm(true); // Open the form for editing
+    };
 
   return (
     <div style={{border: '1px solid grey', padding: '10px'}}>
        <div style={{marginBottom: '20px', fontSize: '30px'}} >Task Details</div>
              <div style={{ maxHeight: '90vh', width: '250px', overflowY: 'scroll' }}>
 
-      <Button variant="contained" onClick={() => setOpenSubtaskForm(true)}>
+      <Button variant="contained" onClick={() => {setOpenSubtaskForm(true); setEditMode(false);}}>
         Create Subtask
       </Button>
 
@@ -64,7 +67,7 @@ const SubTask = () => {
     <Typography gutterBottom variant="h5" component="div">
       {subtask.title}
     </Typography>
-    {/* Tooltip with point form details */}
+
     <Tooltip 
       title={
         <React.Fragment>
@@ -87,11 +90,10 @@ const SubTask = () => {
         Completion Date: {new Date(subtask.completion_date).toLocaleDateString()}
       </Typography>
     )}
-    {/* Add other details you want to show here */}
   </CardContent>
   <CardActions>
-    <Button size="small">Edit</Button>
-    <Button size="small">Delete</Button>
+        <Button size="small" onClick={() => {handleEditClick(subtask); setEditSubtask(subtask); setEditMode(true);}}>Edit</Button>
+        <Button size="small">Delete</Button>
   </CardActions>
 </Card>
        
@@ -109,13 +111,18 @@ const SubTask = () => {
       ))}
     </div>
 
-    {currentTask && (
-  <SubTaskForm
-    open={openSubtaskForm}
-    onClose={() => setOpenSubtaskForm(false)}
-    currentTask={currentTask}
-  />
-)}
+    {currentTask && editSubtask && (
+        <SubTaskForm
+          open={openSubtaskForm}
+          editMode={editMode} // editMode is true if there's a subtask to edit
+          subtaskToEdit={editSubtask} // Pass the subtask to be edited
+          fetchSubtasks={fetchSubtasks}
+          onClose={() => {
+            setOpenSubtaskForm(false);
+          }}
+          currentTask={currentTask}
+        />
+      )}
     </div>
   );
 };

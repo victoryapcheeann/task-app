@@ -47,7 +47,6 @@ const Task = () => {
     if (error) {
         console.error('Error fetching tasks:', error.message);
     } else {
-        console.log('task', data)
         setTasks(data);
     }
 

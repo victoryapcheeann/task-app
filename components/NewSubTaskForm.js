@@ -1,17 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, TextField, Button, DialogActions, Select, MenuItem, InputLabel, FormControl, Snackbar, Alert } from '@mui/material';
 import { supabase } from '../utils/supabaseClient';
 
-const SubTaskForm = ({ open, onSave, onClose, currentTask }) => {
-    console.log('currentTask', currentTask)
-  const [subtask, setSubtask] = useState({
-    title: '',
-    details: [],
-    status: '',
-    completionDate: '',
-    new_task_id: currentTask.task_id,
-  });
-
+const SubTaskForm = ({ open, onSave, onClose, currentTask, editMode, subtaskToEdit }) => {
+    // Initial empty state for the subtask form
+    const [subtask, setSubtask] = useState({
+      title: '',
+      details: [''],
+      status: '',
+      completionDate: '',
+      task_id: currentTask ? currentTask.id : null,
+    });
+  
+    // This useEffect will run when editMode or subtaskToEdit changes
+    useEffect(() => {
+      if (editMode && subtaskToEdit) {
+        // Load the existing subtask details into the form
+        setSubtask({
+          title: subtaskToEdit.title,
+          details: subtaskToEdit.details,
+          status: subtaskToEdit.status,
+          completionDate: subtaskToEdit.completion_date ? subtaskToEdit.completion_date.split('T')[0] : '', // Assuming completion_date is a datetime string
+          task_id: subtaskToEdit.task_id,
+        });
+      } else {
+        // Reset to empty form if not in edit mode
+        setSubtask({
+          title: '',
+          details: [''],
+          status: '',
+          completionDate: '',
+          task_id: currentTask ? currentTask.id : null,
+        });
+      }
+    }, [editMode, subtaskToEdit, currentTask]);
+  
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
 
   const showSnackbar = (message, severity) => {
@@ -39,32 +62,44 @@ const SubTaskForm = ({ open, onSave, onClose, currentTask }) => {
     setSubtask({ ...subtask, details: newDetails });
   };
 
- // Within your SubTaskForm component
-const handleSubmit = async () => {
+  // Modify handleSubmit for create and edit
+  const handleSubmit = async () => {
+    // Validation logic here
     if (!isFormValid()) {
-      showSnackbar('Please fill in all required fields.', 'warning');
+      // Show error message
       return;
     }
-  
-    console.log('subtask', subtask)
-
+        
     try {
-      const { data, error } = await supabase
-        .rpc('create_subtask', { // Replace 'create_subtask' with the correct RPC method name
-          new_title: subtask.title,
-          new_details: subtask.details,
-          new_status: subtask.status,
-          new_completion_date: subtask.status === 'Completed' ? new Date().toISOString() : null,
-          new_task_id: currentTask.task_id, // Assuming currentTask is available in your component
-        });
+      const { data, error } = editMode 
+        ? await supabase.rpc('edit_subtask_full', {
+            // parameters for editing a subtask
+            subtask_id: subtaskToEdit.subtask_id,
+            new_title: subtask.title,
+            new_details: subtask.details,
+            new_status: subtask.status,
+            new_completion_date: subtask.completionDate,
+            new_task_id: currentTask.task_id
+          })
+        : await supabase.rpc('create_subtask', {
+            // parameters for creating a subtask
+            new_title: subtask.title,
+            new_details: subtask.details,
+            new_status: subtask.status,
+            new_completion_date: subtask.status === 'Completed' ? new Date(subtask.completionDate).toISOString() : null,
+            new_task_id: currentTask.task_id
+          });
   
       if (error) {
         throw error;
       }
   
       // Show a success message
-      showSnackbar('Subtask created successfully!', 'success');
+      if (!editMode) { showSnackbar('Subtask created successfully!', 'success');}
+      if (editMode) { showSnackbar('Subtask updated successfully!', 'success');}
+
       onClose(); // Close the dialog
+      fetchSubtasks()
     } catch (error) {
       // Show an error message
       showSnackbar('Failed to create subtask: ' + error.message, 'error');
@@ -75,7 +110,7 @@ const handleSubmit = async () => {
   return (
     <>
       <Dialog open={open} onClose={onClose} aria-labelledby="subtask-form-dialog-title">
-        <DialogTitle id="subtask-form-dialog-title">Create Sub Task</DialogTitle>
+      <DialogTitle id="form-dialog-title">{editMode ? 'Edit Sub Task' : 'Create New Sub Task'}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -134,7 +169,9 @@ const handleSubmit = async () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="primary">Cancel</Button>
-          <Button onClick={handleSubmit} color="primary" disabled={!isFormValid()}>Create</Button>
+          <Button onClick={handleSubmit} color="primary" disabled={!isFormValid()}>
+            {editMode ? 'Update' : 'Create'}
+          </Button>
         </DialogActions>
       </Dialog>
       <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={closeSnackbar}>
