@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle, TextField, Button, DialogActions, S
 import { supabase } from '../utils/supabaseClient';
 
 const NewTaskForm = ({ open, onSave, onClose, currentUser, allUsers, taskToEdit, editMode, fetchTasks}) => {
-  // Form state
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -13,10 +13,6 @@ const NewTaskForm = ({ open, onSave, onClose, currentUser, allUsers, taskToEdit,
     createdBy: '',
   });
 
-  // Snackbar state
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-
-  // Effect to pre-fill form when in edit mode
   useEffect(() => {
     if (editMode) {
       const assignedToUser = allUsers.find(user => user.name === taskToEdit.assigned_to_name);
@@ -26,7 +22,7 @@ const NewTaskForm = ({ open, onSave, onClose, currentUser, allUsers, taskToEdit,
       setNewTask({
         title: taskToEdit.title,
         description: taskToEdit.description,
-        deadline: taskToEdit.deadline.split('T')[0], // assuming deadline is a date string
+        deadline: taskToEdit.deadline.split('T')[0], 
         assignedTo: assignedToUser.id,
         assignedBy: assignedByUser.id,
         createdBy: createdByUser.id,
@@ -43,11 +39,9 @@ const NewTaskForm = ({ open, onSave, onClose, currentUser, allUsers, taskToEdit,
     }
   }, [editMode, taskToEdit]);
 
-  // Snackbar handlers
   const showSnackbar = (message, severity) => setSnackbar({ open: true, message, severity });
   const closeSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
-  // Check if the form fields are valid
   const isFormValid = () => {
     return newTask.title.trim() &&
            newTask.description.trim() &&
@@ -58,21 +52,19 @@ const NewTaskForm = ({ open, onSave, onClose, currentUser, allUsers, taskToEdit,
   const handleSubmit = async () => {
     if (isFormValid()) {
       try {
-        let result = null; // This will hold the result of the Supabase call
+        let result = null; 
   
         if (editMode) {
-          // Editing an existing task
           result = await supabase.rpc('edit_task_full', {
-            task_id: taskToEdit.task_id, // Assuming we have taskToEdit.id available in edit mode
+            task_id: taskToEdit.task_id, 
             updated_title: newTask.title,
             updated_description: newTask.description,
             updated_deadline: newTask.deadline,
-            updated_assigned_by: newTask.assignedBy, // currentUser.id used for both assignedBy and createdBy in edit mode
+            updated_assigned_by: newTask.assignedBy, 
             updated_assigned_to: newTask.assignedTo,
-            updated_creator: newTask.createdBy, // This remains unchanged in edit mode
+            updated_creator: newTask.createdBy, 
           });
         } else {
-          // Creating a new task
           result = await supabase.rpc('create_task', {
             new_title: newTask.title,
             new_description: newTask.description,
@@ -86,24 +78,16 @@ const NewTaskForm = ({ open, onSave, onClose, currentUser, allUsers, taskToEdit,
         const { data, error } = result;
   
         if (error) throw error;
-        
-        // Success feedback
         showSnackbar(`Task ${editMode ? 'updated' : 'created'} successfully!`, 'success');
-        
-        // Close the dialog and refresh the task list
-        onSave(data); // Pass the created/updated task data if necessary
+        onSave(data); 
         onClose();
-        fetchTasks(); // Call the passed fetchTasks function to refresh the task list
+        fetchTasks(); 
       } catch (error) {
-        // Error feedback
         showSnackbar(`Failed to ${editMode ? 'update' : 'create'} task: ${error.message}`, 'error');
       }
     }
   };
-  
-  
 
-  // Update form state when input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewTask({ ...newTask, [name]: value });

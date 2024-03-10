@@ -1,27 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/appContext';
 import { supabase } from '../utils/supabaseClient';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
-import CardActions from '@mui/material/CardActions';
-import Button from '@mui/material/Button';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogActions from '@mui/material/DialogActions';
-import Alert from '@mui/material/Alert';
-import NewTaskForm from './NewTaskForm'; 
-import Snackbar from '@mui/material/Snackbar';
+import { Card, CardContent, Typography, CardActions, Button, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Snackbar } from '@mui/material';
+import NewTaskForm from './NewTaskForm';
 
 const Task = () => {
   const { currentUser, allUsers, tasks, setTasks, currentTask, setCurrentTask } = useAppContext();
-  const [currentFilter, setCurrentFilter] = useState('created_by_you'); // Local state for current filter
+  const [currentFilter, setCurrentFilter] = useState('created_by_you');
   const [openNewTaskForm, setOpenNewTaskForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
@@ -29,7 +14,6 @@ const Task = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
 
   const showSnackbar = (message, severity) => setSnackbar({ open: true, message, severity });
-    // Define a mapping from filter to RPC function name
     const filterToRpc = {
     assigned_to_you: 'get_tasks_assigned_to',
     assigned_by_you: 'get_tasks_assigned_by',
@@ -51,7 +35,7 @@ const Task = () => {
     }
 
     if (data && data.length > 0) {
-        setCurrentTask(data[0]); // Set the first task as the current task
+        setCurrentTask(data[0]); 
     }
     };
 
@@ -59,7 +43,7 @@ const Task = () => {
     if (!currentUser) return;
 
     fetchTasks();
-    }, [currentFilter, currentUser, setTasks, setCurrentTask]); // Include setCurrentTask in dependency array
+    }, [currentFilter, currentUser, setTasks, setCurrentTask]); 
   
 
   const handleFilterChange = (event) => {
@@ -79,13 +63,11 @@ const Task = () => {
   };
 
   const handleCreateNewTask = () => {
-    // Here you'll handle the new task creation logic
     handleCloseNewTaskForm();
   };
 
   const handleEditClick = (task) => {
     setEditMode(true)
-    // Set the task to be edited and open the form in edit mode
     setCurrentTask(task);
     handleOpenNewTaskForm();
   };
@@ -101,14 +83,7 @@ const Task = () => {
         .rpc('delete_task', { task_id: taskToDelete.task_id });
   
       if (error) throw error;
-  
-      // Close the confirmation dialog
       setOpenConfirmDialog(false);
-  
-      // Optionally, refresh the tasks list or update the state to remove the deleted task
-      // fetchTasks() or similar logic here
-  
-      // Show success message
       showSnackbar('Task deleted successfully!', 'success');
       fetchTasks();
     } catch (error) {
@@ -116,7 +91,6 @@ const Task = () => {
       showSnackbar('Failed to delete task: ' + error.message, 'error');
     }
   };
-  
   
   return (
     <div style={{border: '1px solid grey', padding: '10px'}}>
@@ -212,14 +186,13 @@ const Task = () => {
         </DialogActions>
     </Dialog>
 
-
       {currentUser && allUsers &&  <NewTaskForm
         open={openNewTaskForm}
-        onSave={handleCreateNewTask} // This needs to handle both create and update
+        onSave={handleCreateNewTask} 
         onClose={handleCloseNewTaskForm}
         currentUser={currentUser}
         allUsers={allUsers}
-        taskToEdit={currentTask} // Pass the task to be edited
+        taskToEdit={currentTask} 
         fetchTasks={fetchTasks}
         editMode={editMode}
       />}

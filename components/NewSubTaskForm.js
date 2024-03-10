@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, TextField, Button, DialogActions, Select, MenuItem, InputLabel, FormControl, Snackbar, Alert } from '@mui/material';
 import { supabase } from '../utils/supabaseClient';
 
-const SubTaskForm = ({ open, onSave, onClose, currentTask, editMode, subtaskToEdit }) => {
-    // Initial empty state for the subtask form
+const SubTaskForm = ({ open, onClose, currentTask, editMode, subtaskToEdit, fetchSubtasks }) => {
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
     const [subtask, setSubtask] = useState({
       title: '',
       details: [''],
@@ -12,19 +12,16 @@ const SubTaskForm = ({ open, onSave, onClose, currentTask, editMode, subtaskToEd
       task_id: currentTask ? currentTask.id : null,
     });
   
-    // This useEffect will run when editMode or subtaskToEdit changes
     useEffect(() => {
       if (editMode && subtaskToEdit) {
-        // Load the existing subtask details into the form
         setSubtask({
           title: subtaskToEdit.title,
           details: subtaskToEdit.details,
           status: subtaskToEdit.status,
-          completionDate: subtaskToEdit.completion_date ? subtaskToEdit.completion_date.split('T')[0] : '', // Assuming completion_date is a datetime string
+          completionDate: subtaskToEdit.completion_date ? subtaskToEdit.completion_date.split('T')[0] : '', 
           task_id: subtaskToEdit.task_id,
         });
       } else {
-        // Reset to empty form if not in edit mode
         setSubtask({
           title: '',
           details: [''],
@@ -35,8 +32,6 @@ const SubTaskForm = ({ open, onSave, onClose, currentTask, editMode, subtaskToEd
       }
     }, [editMode, subtaskToEdit, currentTask]);
   
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-
   const showSnackbar = (message, severity) => {
     setSnackbar({ open: true, message, severity });
   };
@@ -62,27 +57,22 @@ const SubTaskForm = ({ open, onSave, onClose, currentTask, editMode, subtaskToEd
     setSubtask({ ...subtask, details: newDetails });
   };
 
-  // Modify handleSubmit for create and edit
   const handleSubmit = async () => {
-    // Validation logic here
     if (!isFormValid()) {
-      // Show error message
       return;
     }
         
     try {
       const { data, error } = editMode 
         ? await supabase.rpc('edit_subtask_full', {
-            // parameters for editing a subtask
             subtask_id: subtaskToEdit.subtask_id,
             new_title: subtask.title,
             new_details: subtask.details,
             new_status: subtask.status,
-            new_completion_date: subtask.completionDate,
+            new_completion_date: subtask.completionDate ? subtask.completionDate: null,
             new_task_id: currentTask.task_id
           })
         : await supabase.rpc('create_subtask', {
-            // parameters for creating a subtask
             new_title: subtask.title,
             new_details: subtask.details,
             new_status: subtask.status,
@@ -90,23 +80,16 @@ const SubTaskForm = ({ open, onSave, onClose, currentTask, editMode, subtaskToEd
             new_task_id: currentTask.task_id
           });
   
-      if (error) {
-        throw error;
-      }
-  
-      // Show a success message
+      if (error) {throw error;}
       if (!editMode) { showSnackbar('Subtask created successfully!', 'success');}
       if (editMode) { showSnackbar('Subtask updated successfully!', 'success');}
-
-      onClose(); // Close the dialog
+      onClose(); 
       fetchSubtasks()
     } catch (error) {
-      // Show an error message
       showSnackbar('Failed to create subtask: ' + error.message, 'error');
     }
   };
   
-
   return (
     <>
       <Dialog open={open} onClose={onClose} aria-labelledby="subtask-form-dialog-title">
@@ -123,7 +106,6 @@ const SubTaskForm = ({ open, onSave, onClose, currentTask, editMode, subtaskToEd
             onChange={handleInputChange}
             required
           />
-          {/* Details text fields */}
           {subtask.details.map((detail, index) => (
             <TextField
               key={index}
