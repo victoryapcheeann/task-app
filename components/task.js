@@ -16,6 +16,7 @@ const Task = () => {
   const { currentUser, allUsers, tasks, setTasks, currentTask, setCurrentTask } = useAppContext();
   const [currentFilter, setCurrentFilter] = useState('assigned_to_you'); // Local state for current filter
   const [openNewTaskForm, setOpenNewTaskForm] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
     // Define a mapping from filter to RPC function name
     const filterToRpc = {
@@ -69,6 +70,13 @@ const Task = () => {
     // Here you'll handle the new task creation logic
     handleCloseNewTaskForm();
   };
+
+  const handleEditClick = (task) => {
+    setEditMode(true)
+    // Set the task to be edited and open the form in edit mode
+    setCurrentTask(task);
+    handleOpenNewTaskForm();
+  };
   
   return (
     <div style={{border: '1px solid grey', padding: '10px'}}>
@@ -89,9 +97,17 @@ const Task = () => {
       </FormControl>
       <br/>
       {currentFilter === 'created_by_you' && (
-        <Button style={{marginTop: '20px'}} variant="contained" color="primary" onClick={handleOpenNewTaskForm}>
-            Create New Task
-        </Button>
+        <Button
+        style={{ marginTop: '20px' }}
+        variant="contained"
+        color="primary"
+        onClick={() => {
+            setEditMode(false);
+            handleOpenNewTaskForm();
+        }}
+        >
+        Create New Task
+    </Button>
       )}
       <br/>
       <div style={{ maxHeight: '80vh', width: '250px', overflowY: 'scroll' }}>
@@ -118,41 +134,34 @@ const Task = () => {
                 </Typography>
                 <Typography variant="body1" component="p">
                 </Typography>
-                {/* Show assigned by unless the current tab is assigned_by */}
-                {currentFilter !== 'assigned_by_you' && (
                 <Typography variant="body1" component="p">
                     Assigned By: {task.assigned_by_name}
                 </Typography>
-                )}
-                {/* Show assigned to unless the current tab is assigned_to */}
-                {currentFilter !== 'assigned_to_you' && (
                 <Typography variant="body1" component="p">
                     Assigned To: {task.assigned_to_name}
                 </Typography>
-                )}
-                {/* Show creator unless the current tab is created_by */}
-                {currentFilter !== 'created_by_you' && (
                 <Typography variant="body1" component="p">
                     Creator: {task.creator_name}
                 </Typography>
-                )}
             </CardContent>
             <CardActions>
-                <Button size="small">Edit</Button>
+                <Button size="small" onClick={() => handleEditClick(task)}>Edit</Button>
                 <Button size="small">Delete</Button>
             </CardActions>
             </Card>
         ))}
       </div>
 
-      {currentUser && allUsers && <NewTaskForm
-        open={openNewTaskForm} // This state controls the visibility of the dialog
-        onSave={handleCreateNewTask}
+      {currentUser && allUsers &&  <NewTaskForm
+        open={openNewTaskForm}
+        onSave={handleCreateNewTask} // This needs to handle both create and update
         onClose={handleCloseNewTaskForm}
-        currentUser={currentUser} 
+        currentUser={currentUser}
         allUsers={allUsers}
+        taskToEdit={currentTask} // Pass the task to be edited
         fetchTasks={fetchTasks}
-        />}
+        editMode={editMode}
+      />}
     </div>
   );
 };
