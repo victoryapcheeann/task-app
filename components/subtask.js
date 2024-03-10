@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/appContext';
 import { supabase } from '../utils/supabaseClient';
 import Card from '@mui/material/Card';
@@ -9,9 +9,11 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import InfoIcon from '@mui/icons-material/Info';
+import SubTaskForm from './NewSubTaskForm';
 
 const SubTask = () => {
   const { currentTask, subtasks, setSubtasks } = useAppContext();
+  const [openSubtaskForm, setOpenSubtaskForm] = useState(false); // State to control the dialog visibility
 
   useEffect(() => {
     if (!currentTask) return;
@@ -43,6 +45,11 @@ const SubTask = () => {
     <div style={{border: '1px solid grey', padding: '10px'}}>
        <div style={{marginBottom: '20px', fontSize: '30px'}} >Task Details</div>
              <div style={{ maxHeight: '90vh', width: '250px', overflowY: 'scroll' }}>
+
+      <Button variant="contained" onClick={() => setOpenSubtaskForm(true)}>
+        Create Subtask
+      </Button>
+
       {subtasks.map((subtask, index) => (
         <div key={subtask.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* Subtask card */}
@@ -101,6 +108,14 @@ const SubTask = () => {
         </div>
       ))}
     </div>
+
+    {currentTask && (
+  <SubTaskForm
+    open={openSubtaskForm}
+    onClose={() => setOpenSubtaskForm(false)}
+    currentTask={currentTask}
+  />
+)}
     </div>
   );
 };

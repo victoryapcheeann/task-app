@@ -21,7 +21,7 @@ import Snackbar from '@mui/material/Snackbar';
 
 const Task = () => {
   const { currentUser, allUsers, tasks, setTasks, currentTask, setCurrentTask } = useAppContext();
-  const [currentFilter, setCurrentFilter] = useState('assigned_to_you'); // Local state for current filter
+  const [currentFilter, setCurrentFilter] = useState('created_by_you'); // Local state for current filter
   const [openNewTaskForm, setOpenNewTaskForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
