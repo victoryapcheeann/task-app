@@ -23,7 +23,7 @@ const SubTask = () => {
       if (error) {
         console.error('Error fetching subtasks:', error.message);
       } else {
-        console.log(data)
+        console.log('subtask', data)
         setSubtasks(data);
       }
     };
@@ -36,7 +36,7 @@ const SubTask = () => {
   }, [subtasks])
 
   const getBorderColor = (status) => {
-    return status === 'Completed' ? 'green' : 'none';
+    return status === 'Completed' ? 'green' : 'grey ';
   };
 
   return (
@@ -45,17 +45,6 @@ const SubTask = () => {
              <div style={{ maxHeight: '90vh', width: '250px', overflowY: 'scroll' }}>
       {subtasks.map((subtask, index) => (
         <div key={subtask.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* Vertical line connector logic */}
-          {index > 0 && (
-            <div
-              style={{
-                height: '20px',
-                width: '2px',
-                backgroundColor: 'grey',
-              }}
-            />
-          )}
-
           {/* Subtask card */}
           <Card style={{
               width: 200,
@@ -98,7 +87,7 @@ const SubTask = () => {
     <Button size="small">Delete</Button>
   </CardActions>
 </Card>
-
+       
           {/* Vertical line connector logic */}
           {index < subtasks.length - 1 && (
             <div

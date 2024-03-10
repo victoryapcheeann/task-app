@@ -18,6 +18,7 @@ const User = () => {
         setAllUsers(data);
         // Set the first user as the default current user
         if (data.length > 0) {
+          console.log('users', data)
           setCurrentUser(data[0]);
         }
       }

@@ -10,37 +10,40 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import NewTaskForm from './NewTaskForm'; 
 
 const Task = () => {
-  const { currentUser, tasks, setTasks, currentTask, setCurrentTask } = useAppContext();
+  const { currentUser, allUsers, tasks, setTasks, currentTask, setCurrentTask } = useAppContext();
   const [currentFilter, setCurrentFilter] = useState('assigned_to_you'); // Local state for current filter
-
-  useEffect(() => {
-    if (!currentUser) return;
+  const [openNewTaskForm, setOpenNewTaskForm] = useState(false);
 
     // Define a mapping from filter to RPC function name
     const filterToRpc = {
-      assigned_to_you: 'get_tasks_assigned_to',
-      assigned_by_you: 'get_tasks_assigned_by',
-      created_by_you: 'get_tasks_created_by',
+    assigned_to_you: 'get_tasks_assigned_to',
+    assigned_by_you: 'get_tasks_assigned_by',
+    created_by_you: 'get_tasks_created_by',
     };
 
     const rpcFunctionName = filterToRpc[currentFilter];
-    
-    const fetchTasks = async () => {
-      let { data, error } = await supabase
-        .rpc(rpcFunctionName, { person_id: currentUser.id });
-      
-      if (error) {
-        console.error('Error fetching tasks:', error.message);
-      } else {
-        setTasks(data);
-      }
 
-      if (data && data.length > 0) {
+    const fetchTasks = async () => {
+    let { data, error } = await supabase
+        .rpc(rpcFunctionName, { person_id: currentUser.id });
+
+    if (error) {
+        console.error('Error fetching tasks:', error.message);
+    } else {
+        console.log('task', data)
+        setTasks(data);
+    }
+
+    if (data && data.length > 0) {
         setCurrentTask(data[0]); // Set the first task as the current task
-      }
+    }
     };
+
+  useEffect(() => {
+    if (!currentUser) return;
 
     fetchTasks();
     }, [currentFilter, currentUser, setTasks, setCurrentTask]); // Include setCurrentTask in dependency array
@@ -54,10 +57,23 @@ const Task = () => {
     setCurrentTask(task);
   };
 
+  const handleOpenNewTaskForm = () => {
+    setOpenNewTaskForm(true);
+  };
+
+  const handleCloseNewTaskForm = () => {
+    setOpenNewTaskForm(false);
+  };
+
+  const handleCreateNewTask = () => {
+    // Here you'll handle the new task creation logic
+    handleCloseNewTaskForm();
+  };
+  
   return (
     <div style={{border: '1px solid grey', padding: '10px'}}>
        <div style={{marginBottom: '20px', fontSize: '30px'}} >Task</div>
-      <FormControl fullWidth>
+      <FormControl>
         <InputLabel id="task-filter-select-label">Filter Tasks</InputLabel>
         <Select
           labelId="task-filter-select-label"
@@ -71,6 +87,13 @@ const Task = () => {
           <MenuItem value="created_by_you">Created by You</MenuItem>
         </Select>
       </FormControl>
+      <br/>
+      {currentFilter === 'created_by_you' && (
+        <Button style={{marginTop: '20px'}} variant="contained" color="primary" onClick={handleOpenNewTaskForm}>
+            Create New Task
+        </Button>
+      )}
+      <br/>
       <div style={{ maxHeight: '80vh', width: '250px', overflowY: 'scroll' }}>
       {tasks.map((task) => (
             <Card 
@@ -94,7 +117,6 @@ const Task = () => {
                 Deadline: {new Date(task.deadline).toLocaleDateString()}
                 </Typography>
                 <Typography variant="body1" component="p">
-                Status: {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
                 </Typography>
                 {/* Show assigned by unless the current tab is assigned_by */}
                 {currentFilter !== 'assigned_by_you' && (
@@ -122,6 +144,15 @@ const Task = () => {
             </Card>
         ))}
       </div>
+
+      {currentUser && allUsers && <NewTaskForm
+        open={openNewTaskForm} // This state controls the visibility of the dialog
+        onSave={handleCreateNewTask}
+        onClose={handleCloseNewTaskForm}
+        currentUser={currentUser} 
+        allUsers={allUsers}
+        fetchTasks={fetchTasks}
+        />}
     </div>
   );
 };
