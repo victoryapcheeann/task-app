@@ -59,9 +59,7 @@ const NewTaskForm = ({ open, onSave, onClose, currentUser, allUsers, taskToEdit,
     if (isFormValid()) {
       try {
         let result = null; // This will hold the result of the Supabase call
-        console.log('taskToEdit', taskToEdit)
-        console.log('newTask', newTask)
-
+  
         if (editMode) {
           // Editing an existing task
           result = await supabase.rpc('edit_task_full', {
